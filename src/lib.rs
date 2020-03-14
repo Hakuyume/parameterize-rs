@@ -1,3 +1,5 @@
+mod macros;
+
 use std::cell::RefCell;
 use std::fmt::{Arguments, Debug};
 use std::panic;
@@ -44,15 +46,16 @@ where
 
     for (param, is_ok, _) in &tests {
         if *is_ok {
-            __print_fmt(format_args!("{} ({}) ... ok\n", name, param));
+            println!("{} ({}) ... ok", name, param);
         } else {
-            __print_fmt(format_args!("{} ({}) ... FAILED\n", name, param));
+            println!("{} ({}) ... FAILED", name, param);
         }
     }
     for (param, is_ok, output) in &tests {
         if !*is_ok {
-            __print_fmt(format_args!("\n---- {} ({}) stdout ----\n", name, param));
-            __print_fmt(format_args!("{}\n", output));
+            println!();
+            println!("---- {} ({}) stdout ----", name, param);
+            println!("{}", output);
         }
     }
     let failed = tests.iter().filter(|(_, is_ok, _)| !is_ok).count();
@@ -63,7 +66,7 @@ where
 
 pub fn __print_fmt(fmt: Arguments) {
     OUTPUT.with(|output| match &*output.borrow() {
-        Output::Default => print!("{}", fmt),
+        Output::Default => std::print!("{}", fmt),
         Output::Captured(tx) => tx.send(format!("{}", fmt)).unwrap(),
     })
 }
@@ -76,17 +79,17 @@ enum Output {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{dbg, println};
 
     #[test]
     fn test_ok() {
-        parameterize(0..10, |i| __print_fmt(format_args!("{}\n", i)));
+        parameterize(0..10, |i| println!("{}", i));
     }
 
     #[test]
     fn test_failed() {
         parameterize(0..10, |i| {
-            __print_fmt(format_args!("{}\n", i));
-            assert_eq!(i % 3, 0);
+            assert_eq!(dbg!(i) % 3, 0);
         });
     }
 }
