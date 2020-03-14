@@ -26,31 +26,34 @@ where
     let tests = params
         .into_iter()
         .map(|param| {
-            let dbg_param = format!("{:#?}", param);
+            let name = format!("{} ({:#?})", name, param);
             let (tx, rx) = mpsc::channel();
-            let handle = thread::spawn(move || {
-                OUTPUT.with(|output| output.replace(Output::Captured(tx)));
-                f(param);
-            });
-            (dbg_param, rx, handle)
+            let handle = thread::Builder::new()
+                .name(name.clone())
+                .spawn(move || {
+                    OUTPUT.with(|output| output.replace(Output::Captured(tx)));
+                    f(param);
+                })
+                .unwrap();
+            (name, rx, handle)
         })
         .collect::<Vec<_>>();
     let tests = tests
         .into_iter()
-        .map(|(param, rx, handle)| {
+        .map(|(name, rx, handle)| {
             let is_ok = handle.join().is_ok();
             let output = rx.try_iter().collect::<String>();
-            (param, is_ok, output)
+            (name, is_ok, output)
         })
         .collect::<Vec<_>>();
 
-    for (param, is_ok, _) in &tests {
-        println!("test {} ({}) ... {}", name, param, status(*is_ok));
+    for (name, is_ok, _) in &tests {
+        println!("test {} ... {}", name, status(*is_ok));
     }
-    for (param, is_ok, output) in &tests {
+    for (name, is_ok, output) in &tests {
         if !*is_ok {
             println!();
-            println!("---- {} ({}) stdout ----", name, param);
+            println!("---- {} stdout ----", name);
             println!("{}", output);
         }
     }
