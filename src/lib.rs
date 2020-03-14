@@ -45,11 +45,7 @@ where
         .collect::<Vec<_>>();
 
     for (param, is_ok, _) in &tests {
-        if *is_ok {
-            println!("test {} ({}) ... ok", name, param);
-        } else {
-            println!("test {} ({}) ... FAILED", name, param);
-        }
+        println!("test {} ({}) ... {}", name, param, status(*is_ok));
     }
     for (param, is_ok, output) in &tests {
         if !*is_ok {
@@ -75,6 +71,29 @@ pub fn __print_fmt(fmt: Arguments) {
 enum Output {
     Default,
     Captured(mpsc::Sender<String>),
+}
+
+#[cfg(feature = "termion")]
+fn status(is_ok: bool) -> String {
+    let (status, color) = if is_ok {
+        ("ok", termion::color::Green.fg_str())
+    } else {
+        ("FAILED", termion::color::Red.fg_str())
+    };
+    if termion::is_tty(&std::io::stdout()) {
+        format!("{}{}{}", color, status, termion::color::Reset.fg_str())
+    } else {
+        status.to_owned()
+    }
+}
+
+#[cfg(not(feature = "termion"))]
+fn status(is_ok: bool) -> &'static str {
+    if is_ok {
+        "ok"
+    } else {
+        "FAILED"
+    }
 }
 
 #[cfg(test)]
