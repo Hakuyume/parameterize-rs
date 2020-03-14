@@ -46,9 +46,9 @@ where
 
     for (param, is_ok, _) in &tests {
         if *is_ok {
-            println!("{} ({}) ... ok", name, param);
+            println!("test {} ({}) ... ok", name, param);
         } else {
-            println!("{} ({}) ... FAILED", name, param);
+            println!("test {} ({}) ... FAILED", name, param);
         }
     }
     for (param, is_ok, output) in &tests {
@@ -60,6 +60,7 @@ where
     }
     let failed = tests.iter().filter(|(_, is_ok, _)| !is_ok).count();
     if failed != 0 {
+        println!();
         panic!("{} of {} tests failed", failed, tests.len());
     }
 }
