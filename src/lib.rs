@@ -4,7 +4,10 @@ use std::cell::RefCell;
 use std::fmt::{Arguments, Debug};
 use std::panic;
 use std::sync::mpsc;
+use std::sync::Once;
 use std::thread;
+
+static SET_HOOK: Once = Once::new();
 
 thread_local! {
     static OUTPUT: RefCell<Output> = RefCell::new(Output::Default);
@@ -16,9 +19,11 @@ where
     I::Item: 'static + Debug + Send,
     F: 'static + Copy + Fn(I::Item) + Send,
 {
-    panic::set_hook(Box::new(|panic_info| {
-        __print_fmt(format_args!("{}", panic_info))
-    }));
+    SET_HOOK.call_once(|| {
+        panic::set_hook(Box::new(|panic_info| {
+            __print_fmt(format_args!("{}", panic_info))
+        }))
+    });
 
     let th = thread::current();
     let name = th.name().unwrap_or_default();
