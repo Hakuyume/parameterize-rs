@@ -52,7 +52,6 @@ where
     }
     for (name, is_ok, output) in &tests {
         if !*is_ok {
-            println!();
             println!("---- {} stdout ----", name);
             println!("{}", output);
         }
