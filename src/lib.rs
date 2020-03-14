@@ -107,6 +107,7 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn test_failed() {
         parameterize(0..10, |i| {
             assert_eq!(dbg!(i) % 3, 0);
