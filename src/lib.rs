@@ -17,7 +17,7 @@ pub fn parameterize<I, F>(params: I, f: F)
 where
     I: IntoIterator,
     I::Item: 'static + Debug + Send,
-    F: 'static + Copy + Fn(I::Item) + Send,
+    F: 'static + Clone + FnOnce(I::Item) + Send,
 {
     SET_HOOK.call_once(|| {
         panic::set_hook(Box::new(|panic_info| {
@@ -33,6 +33,7 @@ where
         .map(|param| {
             let name = format!("{} ({:#?})", name, param);
             let (tx, rx) = mpsc::channel();
+            let f = f.clone();
             let handle = thread::Builder::new()
                 .name(name.clone())
                 .spawn(move || {
