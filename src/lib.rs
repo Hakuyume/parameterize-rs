@@ -28,19 +28,22 @@ where
     let th = thread::current();
     let name = th.name().unwrap_or_default();
 
-    let tests = params.into_iter().map(|param| {
-        let name = format!("{} ({:#?})", name, param);
-        let (tx, rx) = mpsc::channel();
-        let f = f.clone();
-        let handle = thread::Builder::new()
-            .name(name.clone())
-            .spawn(move || {
-                OUTPUT.with(|output| output.replace(Output::Captured(tx)));
-                f(param);
-            })
-            .unwrap();
-        (name, rx, handle)
-    });
+    let tests = params
+        .into_iter()
+        .map(|param| {
+            let name = format!("{} ({:#?})", name, param);
+            let (tx, rx) = mpsc::channel();
+            let f = f.clone();
+            let handle = thread::Builder::new()
+                .name(name.clone())
+                .spawn(move || {
+                    OUTPUT.with(|output| output.replace(Output::Captured(tx)));
+                    f(param);
+                })
+                .unwrap();
+            (name, rx, handle)
+        })
+        .collect::<Vec<_>>();
     let tests = tests
         .into_iter()
         .map(|(name, rx, handle)| {
